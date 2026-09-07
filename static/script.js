@@ -75,32 +75,33 @@ async function startSpin() {
 
         if (!response.ok) {
             resultElement.textContent = `❌ ${data.error}`;
+            spinButton.disabled = false;
             return;
         }
 
-        for (const cascade of data.cascades) {
-            currentGrid = cascade.grid;
-            renderGrid(currentGrid, cascade.positions);
-            resultElement.textContent =
-                `💥 Каскад! Множитель x${cascade.multiplier}, выигрыш +${cascade.win}`;
-            await sleep(650);
-
-            renderGrid(currentGrid, [], cascade.positions);
-            await sleep(300);
-        }
-
-        renderGrid(data.grid, [], [], true);
+        // Обновляем баланс
         balanceElement.textContent = data.balance;
 
+        // Показываем каскады
+        for (const cascade of data.cascades) {
+            renderGrid(cascade.grid, cascade.positions);
+            resultElement.textContent = `💥 Каскад! Множитель x${cascade.multiplier}, выигрыш +${cascade.win}`;
+            await sleep(800);
+        }
+
+        // Финальная сетка
+        renderGrid(data.grid, [], [], true);
+
+        // Результат
         if (data.free_spins > 0) {
-            resultElement.textContent =
-                `🎉 БОНУС: ${data.bonus_count} звезды! Получено ${data.free_spins} бесплатных вращений.`;
+            resultElement.textContent = `🎉 БОНУС: ${data.bonus_count} звезды! Получено ${data.free_spins} бесплатных вращений.`;
         } else if (data.total_win > 0) {
             resultElement.textContent = `💰 Победа: +${data.total_win} монет!`;
         } else {
             resultElement.textContent = "😢 В этот раз без выигрыша.";
         }
     } catch (error) {
+        console.error(error);
         resultElement.textContent = "Ошибка соединения с сервером.";
     } finally {
         spinButton.disabled = false;
@@ -109,5 +110,6 @@ async function startSpin() {
 
 spinButton.addEventListener("click", startSpin);
 
+// Инициализация
 currentGrid = demoGrid();
 renderGrid(currentGrid);
