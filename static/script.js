@@ -6,103 +6,102 @@ const resultElement = document.getElementById("result");
 
 const ROWS = 5;
 const COLS = 6;
-let currentGrid = [];
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function randomDemoSymbol() {
+function randomSymbol() {
     const symbols = ["🍒", "🍋", "🍇", "🍉", "🍓", "💎", "7️⃣", "⭐"];
     return symbols[Math.floor(Math.random() * symbols.length)];
 }
 
-function demoGrid() {
+function createGrid() {
     return Array.from({ length: ROWS }, () =>
-        Array.from({ length: COLS }, randomDemoSymbol())
+        Array.from({ length: COLS }, randomSymbol)
     );
 }
 
-function renderGrid(grid, winning = [], removed = [], falling = false) {
-    const winningSet = new Set(winning.map(([row, col]) => `${row}-${col}`));
-    const removedSet = new Set(removed.map(([row, col]) => `${row}-${col}`));
-
+function renderGrid(grid, winningPositions = []) {
     gridElement.innerHTML = "";
+    
+    const winningSet = new Set(
+        winningPositions.map(([r, c]) => `${r}-${c}`)
+    );
 
-    grid.forEach((row, rowIndex) => {
-        row.forEach((symbol, colIndex) => {
+    for (let row = 0; row < ROWS; row++) {
+        for (let col = 0; col < COLS; col++) {
             const cell = document.createElement("div");
-            const key = `${rowIndex}-${colIndex}`;
             cell.className = "cell";
-
-            if (winningSet.has(key)) cell.classList.add("winner");
-            if (removedSet.has(key)) cell.classList.add("removed");
-            if (falling) cell.classList.add("fall");
-
-            cell.textContent = symbol || "";
+            
+            if (winningSet.has(`${row}-${col}`)) {
+                cell.classList.add("winner");
+            }
+            
+            cell.textContent = grid[row][col] || "";
             gridElement.appendChild(cell);
-        });
-    });
+        }
+    }
 }
 
-async function spinVisual() {
-    for (let i = 0; i < 8; i++) {
-        renderGrid(demoGrid(), [], [], true);
-        await sleep(90);
+async function spinAnimation() {
+    for (let i = 0; i < 6; i++) {
+        renderGrid(createGrid());
+        await sleep(100);
     }
 }
 
 async function startSpin() {
-    const bet = Number(betElement.value);
+    const bet = parseInt(betElement.value, 10);
 
-    if (!Number.isInteger(bet) || bet < 1) {
-        resultElement.textContent = "Введите корректную ставку.";
+    if (!bet || bet < 1) {
+        resultElement.textContent = "❌ Введите ставку от 1";
         return;
     }
 
     spinButton.disabled = true;
-    resultElement.textContent = "Барабаны вращаются...";
-    await spinVisual();
+    resultElement.textContent = "🎲 Вращение...";
+
+    await spinAnimation();
 
     try {
         const response = await fetch("/api/spin", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ bet })
+            body: JSON.stringify({ bet: bet })
         });
 
         const data = await response.json();
 
         if (!response.ok) {
-            resultElement.textContent = `❌ ${data.error}`;
+            resultElement.textContent = `❌ ${data.error || "Ошибка"}`;
             spinButton.disabled = false;
             return;
         }
 
-        // Обновляем баланс
         balanceElement.textContent = data.balance;
 
-        // Показываем каскады
-        for (const cascade of data.cascades) {
-            renderGrid(cascade.grid, cascade.positions);
-            resultElement.textContent = `💥 Каскад! Множитель x${cascade.multiplier}, выигрыш +${cascade.win}`;
-            await sleep(800);
+        if (data.cascades && data.cascades.length > 0) {
+            for (const cascade of data.cascades) {
+                renderGrid(cascade.grid, cascade.positions);
+                resultElement.textContent = `💥 x${cascade.multiplier} +${cascade.win}`;
+                await sleep(700);
+            }
         }
 
-        // Финальная сетка
-        renderGrid(data.grid, [], [], true);
+        renderGrid(data.grid);
 
-        // Результат
         if (data.free_spins > 0) {
-            resultElement.textContent = `🎉 БОНУС: ${data.bonus_count} звезды! Получено ${data.free_spins} бесплатных вращений.`;
+            resultElement.textContent = `🎉 БОНУС! +${data.free_spins} вращений`;
         } else if (data.total_win > 0) {
-            resultElement.textContent = `💰 Победа: +${data.total_win} монет!`;
+            resultElement.textContent = `💰 Победа: +${data.total_win}`;
         } else {
-            resultElement.textContent = "😢 В этот раз без выигрыша.";
+            resultElement.textContent = "😢 Попробуй ещё раз";
         }
-    } catch (error) {
-        console.error(error);
-        resultElement.textContent = "Ошибка соединения с сервером.";
+
+    } catch (err) {
+        console.error("Spin error:", err);
+        resultElement.textContent = "❌ Ошибка соединения";
     } finally {
         spinButton.disabled = false;
     }
@@ -110,6 +109,5 @@ async function startSpin() {
 
 spinButton.addEventListener("click", startSpin);
 
-// Инициализация
-currentGrid = demoGrid();
-renderGrid(currentGrid);
+// Стартовая сетка
+renderGrid(createGrid());
