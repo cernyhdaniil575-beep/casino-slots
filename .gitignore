@@ -1,0 +1,9 @@
+venv/
+__pycache__/
+*.pyc
+assets/
+balance.txt
+*.wav
+*.mp3
+*.png
+*.jpg
