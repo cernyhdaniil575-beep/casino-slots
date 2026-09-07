@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fruit Cascade Casino</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <main class="casino">
+        <header class="topbar">
+            <div>
+                <p class="eyebrow">DEMO MODE</p>
+                <h1>FRUIT CASCADE</h1>
+            </div>
+            <div class="balance-box">
+                <span>БАЛАНС</span>
+                <strong id="balance">1000</strong>
+                <b>🪙</b>
+            </div>
+        </header>
+
+        <section class="rules">
+            <span>🎯 8+ одинаковых символов дают выигрыш</span>
+            <span>⭐ 4+ звезды дают 10 бесплатных вращений</span>
+            <span>💥 Победные символы исчезают, остальные падают вниз</span>
+        </section>
+
+        <section id="grid" class="slot-grid" aria-label="Игровое поле"></section>
+
+        <section class="panel">
+            <label>
+                СТАВКА
+                <input id="bet" type="number" min="1" value="10">
+            </label>
+
+            <button id="spinButton" type="button">
+                <span>⚡</span> КРУТИТЬ
+            </button>
+
+            <div class="result" id="result">Сделай ставку и испытай удачу.</div>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
